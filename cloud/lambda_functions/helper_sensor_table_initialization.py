@@ -1,0 +1,64 @@
+import json
+import boto3
+from botocore.exceptions import ClientError
+
+# Initialize DynamoDB resource
+dynamodb = boto3.resource('dynamodb')
+
+def lambda_handler(event, context):
+    # Check if the request method is GET
+    if event['httpMethod'] == 'GET':
+        combined_items = {}
+        try:
+            # Get the value of 'systemName' from the query string parameters
+            systemName = event['queryStringParameters'].get('systemName', None)
+
+            if systemName:
+                # Fetch sensor names dynamically from the {SystemName}SensorTable
+                sensor_table = dynamodb.Table(systemName + 'SensorTable')
+                response = sensor_table.scan()
+                items = response['Items']
+                
+                # Sort items based on the 'ID' attribute
+                sorted_items = sorted(items, key=lambda x: x['ID'])
+
+                # Extract sensor names from sorted items
+                sensor_names = [item['SensorType'] for item in sorted_items]
+
+                # Create sensor tables dynamically
+                sensor_tables = {sensor_name: dynamodb.Table(systemName + '_' + sensor_name + '_Table') for sensor_name in sensor_names}
+                
+                # Iterate over sensor tables
+                for sensor_name in sensor_tables:
+                    db_table = sensor_tables[sensor_name]
+                
+                    # Scan the table for items
+                    response = db_table.scan(
+                        Limit=100
+                    )
+                    items = response['Items']
+                    
+                    # Sort items based on timestamp in descending order
+                    sorted_items = sorted(items, key=lambda x: x.get('timestamp', ''), reverse=True)
+                    
+                    # Store the first 100 items in the combined_items dictionary
+                    combined_items[sensor_name] = sorted_items[:100]
+
+            else:
+                # Return a 400 status code if systemName is not provided in the query string
+                return {
+                    'statusCode': 400,
+                    'body': json.dumps('SystemName not provided in query string')
+                }
+
+            # Return a 200 status code with the combined_items as the response body
+            return {
+                'statusCode': 200,
+                'body': json.dumps(combined_items, default=str)
+            }
+        except ClientError as e:
+            # Return a 500 status code with the error message in the response body if an error occurs
+            return {
+                'statusCode': 500,
+                'body': json.dumps('Error: {}'.format(e))
+            }
