@@ -25,11 +25,9 @@ def lambda_handler(event, context):
     # Extract sensor names from sorted items
     sensor_names = [item['SensorType'] for item in sorted_items]
 
-    print(sensor_names)
 
     # Create sensor tables dynamically
     sensor_tables = {sensor_name: dynamodb.Table(systemName + '_' + sensor_name + '_Table') for sensor_name in sensor_names}
-    print(sensor_tables)
 
     # Query the GatewayMappingsTable to get data based on GatewayID and TopicName
     response = gateway_mappings_table.get_item(
@@ -54,9 +52,6 @@ def lambda_handler(event, context):
         if sensor_reading[sensor_name] is not None:
             sensor_reading[sensor_name] = Decimal(sensor_reading[sensor_name]) / Decimal(100.00)
         i = i+1
-        
-    print(event['sensor1Reading'])
-    print(event.get('sensor1Reading'))
 
     # Obtain node_id and parent_node_id
     node_id = event.get('currentNodeID')
