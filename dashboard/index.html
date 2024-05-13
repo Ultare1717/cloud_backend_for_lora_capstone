@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gateway to Node ID and Sensor Relationship</title>
+  <!-- Styling for the tree and other elements -->
+  <style>
+    .tree-container {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
+    .sleep-hours-container {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Gateway to Node ID and Sensor Relationship</h1>
+
+<div class="tree-container" id="tree-container">
+  <!-- Tree structure will be displayed here -->
+</div>
+
+<div class="sleep-hours-container">
+  <!-- Dropdowns and input for selecting system, gateway, and sleep hours -->
+  <label for="system-select">Select a system:</label>
+  <select id="system-select">
+    <!-- Options will be populated dynamically -->
+  </select>
+  <label for="gateway-select">Select a gateway:</label>
+  <select id="gateway-select">
+    <!-- Options will be populated dynamically based on system selection -->
+  </select>
+  <label for="sleep-hours-input">Enter sleep hours for selected gateway:</label>
+  <input type="number" id="sleep-hours-input" placeholder="Number of hours">
+  <button id="submit-sleep-hours">Submit</button>
+</div>
+
+<!-- Include jQuery library for easier DOM manipulation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script>
+  let combinedData; // Global variable to hold combined data
+
+  // Fetch combined data from server
+  fetch('/combineddata')
+    .then(response => response.json())
+    .then(data => {
+      // Store combined data in global variable
+      combinedData = data.combinedData;
+      // Process data and render tree structure
+      renderTree(combinedData);
+      // Populate system dropdown
+      populateSystemDropdown(combinedData);
+    })
+    .catch(error => console.error('Error fetching combined data:', error));
+
+  // Function to render tree structure
+  function renderTree(combinedData) {
+    const treeContainer = document.getElementById('tree-container');
+
+    // Clear existing content
+    treeContainer.innerHTML = '';
+
+    // Create the JSON structure for jsTree
+    const treeData = [];
+
+    // Iterate over each system
+    for (const systemID in combinedData.gatewayData) {
+      const systemGateways = combinedData.gatewayData[systemID];
+      const systemNode = { text: `System ${systemID}`, children: [] };
+
+      // Iterate over each gateway in the system
+      for (const gatewayID of systemGateways) {
+        const gatewayNode = { text: `Gateway ${gatewayID}`, children: [] };
+
+        // Check if the gateway has associated nodes
+        if (combinedData.nodeData[gatewayID]) {
+          // Iterate over each node in the gateway
+          for (const nodeID of combinedData.nodeData[gatewayID]) {
+            gatewayNode.children.push({ text: `Node ${nodeID}` });
+          }
+        }
+
+        systemNode.children.push(gatewayNode);
+      }
+
+      treeData.push(systemNode);
+    }
+
+    // Initialize jsTree with the treeData
+    $('#tree-container').jstree({
+      core: { data: treeData },
+      plugins: ['wholerow']
+    });
+  }
+
+  // Function to populate the system dropdown
+  function populateSystemDropdown(combinedData) {
+    const systemSelect = $('#system-select');
+    systemSelect.empty(); // Clear existing options
+
+    // Add options for each system
+    for (const systemID in combinedData.gatewayData) {
+      systemSelect.append(`<option value="${systemID}">System ${systemID}</option>`);
+    }
+
+    // Trigger change event once populated
+    systemSelect.trigger('change');
+  }
+
+  // Register change event handler for system dropdown
+  $('#system-select').on('change', function() {
+    const systemID = $(this).val();
+    const gatewaySelect = $('#gateway-select');
+    gatewaySelect.empty(); // Clear existing options
+
+    // Add options for gateways in the selected system
+    for (const gatewayID of combinedData.gatewayData[systemID]) {
+      gatewaySelect.append(`<option value="${gatewayID}">Gateway ${gatewayID}</option>`);
+    }
+  });
+
+  // Register click event handler for submit button
+  $('#submit-sleep-hours').on('click', function() {
+    const systemID = $('#system-select').val();
+    const gatewayID = $('#gateway-select').val();
+    const sleepHoursInput = $('#sleep-hours-input').val();
+    console.log(`Selected System: ${systemID}`);
+    sendToAPIGateway(systemID, gatewayID, sleepHoursInput);
+  });
+
+  // Function to send data to API Gateway
+  function sendToAPIGateway(systemID, gatewayID, sleepHours) {
+    const sensorData = {
+      systemID: systemID,
+      gatewayID: gatewayID,
+      sleepHours: sleepHours
+    };
+
+    // Replace 'YOUR_API_GATEWAY_ENDPOINT' with the actual API Gateway endpoint
+    const apiGatewayEndpoint = 'https://4anxef7bsi.execute-api.ca-central-1.amazonaws.com/default';
+
+    // Adjust the resource path based on your API Gateway configuration
+    const resourcePath = '/control'; // Assuming the resource path is '/control'
+
+    // Send data to the API Gateway using the Fetch API
+    fetch(`${apiGatewayEndpoint}${resourcePath}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(sensorData),
+    })
+      .then(response => response.json())
+      .then(data => {
+        console.log(`Response from API Gateway:`, data);
+      })
+      .catch(error => console.error('Error sending data to API Gateway:', error));
+  }
+</script>
+
+<!-- Include jsTree library for rendering the tree structure -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/themes/default/style.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jstree/3.3.12/jstree.min.js"></script>
+
+</body>
+</html>
+
+</html>
