@@ -131,7 +131,7 @@ def create_iot_rule(system_name):
         return rule_name
     
     rule_sql = f"SELECT * FROM '{system_name}/#'"
-
+    # the fumctionArn in the clients case would be the GatewayDataHandler Lambdas Arn an example is provided in this code.
     params = {
         'ruleName': rule_name,
         'topicRulePayload': {
