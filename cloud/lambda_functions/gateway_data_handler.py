@@ -7,6 +7,7 @@ dynamodb = boto3.resource('dynamodb', region_name='ca-central-1')
 
 # Lambda function handler
 def lambda_handler(event, context):
+    # Extract system name from event
     systemName = event['systemName']
 
     # Retrieve tables
