@@ -9,7 +9,7 @@ DNSServer dnsServer;
 GatewayMqttManager gatewayMqttManager;  // Initialize MQTT manager instance
 GatewayMqttManager* mqttInstance = gatewayMqttManager.getInstance();  // Get singleton instance
 IPAddress apIP(192, 168, 1, 1);  // IP address for the SoftAP
-char thingName[] = "DemoInitializingThing";  // Name of the thing
+char thingName[] = "";  // Name of the thing
 int connected_counter = 0;  // Counter for connection attempts
 
 // Constructor for GatewayWebServerModule
