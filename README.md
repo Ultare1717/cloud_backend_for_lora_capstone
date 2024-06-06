@@ -2,6 +2,9 @@
 
 ## Overview
 
+![image](https://github.com/Ultare1717/cloud_backend_for_lora_capstone/assets/67229334/5de16d5d-41b3-4f72-a32c-f24da4815819)
+
+
 This project aims to establish a robust cloud backend system for LoRa networks. It consists of three core components: Connection Establishment and Gateway Webserver, Cloud Infrastructure Development, and Dashboard Implementation.
 
 ### Components
