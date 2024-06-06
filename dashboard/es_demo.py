@@ -11,7 +11,8 @@ MAX_ENTRIES_SENT_IN_ONE_ITERATION = 1000
 ES_REFRESH_TIME = 30
 
 def get_data_from_aws():
-    url = f"https://0q3f91nb63.execute-api.ca-central-1.amazonaws.com/prod/sensordata?systemName={SYSTEM_NAME}"
+    url = f"?systemName={SYSTEM_NAME}"
+    # Replace with your API GAteway Endpoint
 
     try:
         # Send a GET request to the API
